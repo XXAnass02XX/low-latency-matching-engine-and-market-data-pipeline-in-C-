@@ -5,26 +5,28 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NetMQ;
+using NetMQ.Sockets;
 
 class Program
 {
-    static async Task Main(string[] args)
+    static void Main(string[] args)
     {
-        int port = 0; //  tcp://localhost:0
+        // The publisher binds (@tcp://localhost:58965), so we connect as a subscriber
+        string endpoint = "tcp://localhost:58965";
 
-        // Start the listener and pass our callback method
-        var listener = new SimpleTcpListener(port, (message, clientEndPoint) =>
+        using var subSocket = new SubscriberSocket();
+        subSocket.Connect(endpoint);
+        subSocket.Subscribe("Quotes");
+
+        Console.WriteLine($"Subscribed to 'Quotes' on {endpoint}... Press Ctrl+C to stop.");
+
+        while (true)
         {
-            Console.WriteLine($"[Callback Fired] Received from {clientEndPoint}: {message}");
-        });
-
-        CancellationTokenSource cts = new CancellationTokenSource();
-        
-        Console.WriteLine($"Listening on port {port}... Press Ctrl+C to stop.");
-        Task listenerTask = listener.StartListeningAsync(cts.Token);
-
-        // Keep the application running
-        await Task.Delay(Timeout.Infinite, cts.Token);
+            string topic = subSocket.ReceiveFrameString();
+            string quote = subSocket.ReceiveFrameString();
+            Console.WriteLine($"[{topic}] {quote}");
+        }
     }
 }
 

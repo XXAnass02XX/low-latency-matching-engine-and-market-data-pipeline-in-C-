@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="marketMatchingEngine.csproj" />
+  <Project Path="Tests/Tests.csproj" />
 </Solution>
